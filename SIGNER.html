@@ -1,198 +1,309 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BSC Signer - Manus</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Signer - توقيع المعاملات (BSC)</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
     <style>
-        :root {
-            --bg-color: #000000;
-            --primary-color: #F3BA2F;
-            --text-color: #ffffff;
-            --card-bg: #1a1a1a;
-            --input-bg: #262626;
-            --border-color: #333333;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 10px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color);
-        }
-
-        h1, h2 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--input-bg);
-            color: white;
-            font-size: 14px;
-            resize: vertical;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border-radius: 8px;
-            border: none;
-            background-color: var(--primary-color);
-            color: black;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .result-area {
-            margin-top: 20px;
-            padding: 15px;
-            background: #0a0a0a;
-            border-radius: 8px;
-            border: 1px dashed var(--primary-color);
-        }
-
-        .copy-box {
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--primary-color);
-            margin: 10px 0;
-            cursor: pointer;
-        }
-
-        .hint {
-            font-size: 12px;
-            color: #888;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        #load-status {
-            text-align: center;
-            color: #888;
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#000;font-family:system-ui;padding:16px;color:#eee;}
+        .card{background:#111;border-radius:28px;padding:20px;margin-bottom:20px;border:1px solid #2c2c2c;}
+        .card-title{color:#F5B041;font-weight:bold;margin-bottom:15px;font-size:20px;}
+        input,textarea{width:100%;padding:14px;background:#1e1e1e;border:1px solid #333;border-radius:28px;color:white;font-size:14px;margin:8px 0;font-family:monospace;}
+        button{background:#F5B041;color:#000;border:none;padding:14px;border-radius:40px;font-weight:bold;width:100%;margin-top:12px;cursor:pointer;transition:0.2s;}
+        button:active{transform:scale(0.97);}
+        .copy-btn{background:#F5B041;margin-top:6px;padding:10px;}
+        .result-area{background:#1a1a1a;border-radius:20px;padding:12px;margin-top:15px;}
+        .warning-note{color:#F5B041;margin-top:8px;font-size:12px;}
+        .info-text{font-size:13px;line-height:1.4;color:#aaa;}
+        .example-btn{background:#2c2c2c;color:#F5B041;margin-top:8px;padding:8px;font-size:12px;}
     </style>
 </head>
 <body>
-
-<div class="container">
+<div style="max-width:600px;margin:0 auto;">
     <div class="card">
-        <h1>أداة توقيع BSC</h1>
-        <div id="load-status">جاري تحميل المكتبات...</div>
+        <div class="card-title">✍️ توقيع المعاملات (BSC Signer)</div>
         
-        <label>المفتاح الخاص (Private Key):</label>
-        <input type="password" id="priv-key" placeholder="أدخل المفتاح الخاص هنا">
-
-        <label>بيانات المعاملة غير الموقعة (Unsigned Tx):</label>
-        <textarea id="unsigned-tx" rows="5" placeholder="الصق البيانات المستخرجة من المحفظة هنا"></textarea>
-
-        <button id="sign-btn" onclick="signTransaction()">تكوين التوقيع</button>
-
-        <div id="result-container" style="display:none;">
-            <div class="result-area">
-                <label>المعاملة الموقعة (Signed Tx):</label>
-                <div id="signed-tx-output" class="copy-box" onclick="copyResult()"></div>
-            </div>
-            <p class="hint">اضغط على الكود أعلاه لنسخه تلقائياً</p>
+        <input type="text" id="signer-private-key" placeholder="المفتاح الخاص (0x...)" autocomplete="off">
+        
+        <textarea id="unsigned-tx-input" rows="5" placeholder="ألصق المعاملة غير الموقعة (JSON) التي تم نسخها من المحفظة الرئيسية"></textarea>
+        
+        <button id="sign-tx-btn">🔏 توقيع المعاملة</button>
+        
+        <div id="signed-output-area" class="hidden result-area">
+            <label style="color:#F5B041;">✅ المعاملة الموقعة (نسخها وألصقها في المحفظة):</label>
+            <textarea id="signed-raw-result" rows="3" readonly style="background:#0a0a0a;color:#0f0;"></textarea>
+            <button id="copy-signed-tx" class="copy-btn">📋 نسخ التوقيع</button>
+            <div class="warning-note">⚠️ بعد النسخ، ارجع إلى المحفظة الرئيسية وألصقها في حقل "المعاملة الموقعة" ثم أرسلها بعد المؤقت</div>
         </div>
+        
+        <div id="error-area" class="hidden result-area" style="border-color:#ff4444;">
+            <label style="color:#ff8888;">❌ خطأ:</label>
+            <div id="error-message" style="color:#ff8888;font-size:13px;"></div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-title">💡 تعليمات سريعة</div>
+        <div class="info-text">
+            <strong>1.</strong> من المحفظة الرئيسية (تبويب عنوان عام) أنشئ معاملة غير موقعة وانسخها.<br>
+            <strong>2.</strong> هنا ألصق المعاملة JSON + أدخل مفتاحك الخاص ثم اضغط توقيع.<br>
+            <strong>3.</strong> انسخ النتيجة (التوقيع بصيغة raw transaction) والصقها في المحفظة الرئيسية.<br>
+            <strong>4.</strong> انتظر 15 ثانية ثم يتم الإرسال تلقائياً أو اضغط إرسال يدوياً.<br>
+            <span style="color:#F5B041;">⚠️ لا تشارك مفتاحك الخاص مع أي شخص.</span>
+        </div>
+        <button id="example-btn" class="example-btn">📋 عرض مثال لمعاملة غير موقعة</button>
     </div>
 </div>
 
 <script>
-    window.onload = function() {
-        if (typeof ethers === 'undefined') {
-            document.getElementById('load-status').innerText = "خطأ: تعذر تحميل المكتبات.";
-            document.getElementById('load-status').style.color = "red";
-            document.getElementById('sign-btn').disabled = true;
-        } else {
-            document.getElementById('load-status').style.display = 'none';
+    const web3 = new Web3();
+    
+    // دالة لتحويل JSON إلى كائن معالجة BigInt بشكل صحيح
+    function parseTransactionJSON(jsonString) {
+        try {
+            // أولاً نحول JSON العادي
+            let rawObj = JSON.parse(jsonString);
+            let txObject = {};
+            
+            // الحقول التي يجب أن تكون BigInt أو عدد
+            const numericFields = ['value', 'gas', 'gasPrice', 'nonce', 'chainId'];
+            
+            for (let [key, value] of Object.entries(rawObj)) {
+                if (numericFields.includes(key)) {
+                    // إذا كانت القيمة نصاً رقمياً أو رقماً
+                    if (typeof value === 'string') {
+                        // محاولة تحويل النص إلى BigInt (إذا كان hex أو رقم عادي)
+                        if (value.startsWith('0x')) {
+                            txObject[key] = BigInt(value);
+                        } else if (!isNaN(Number(value))) {
+                            txObject[key] = BigInt(value);
+                        } else {
+                            txObject[key] = value;
+                        }
+                    } else if (typeof value === 'number') {
+                        txObject[key] = BigInt(value);
+                    } else if (typeof value === 'bigint') {
+                        txObject[key] = value;
+                    } else {
+                        txObject[key] = value;
+                    }
+                } else {
+                    // الحقول العادية (from, to, data)
+                    txObject[key] = value;
+                }
+            }
+            
+            // التأكد من وجود from في الكائن
+            if (!txObject.from) {
+                throw new Error('المعاملة لا تحتوي على عنوان المرسل (from)');
+            }
+            
+            return txObject;
+        } catch(e) {
+            throw new Error(`فشل تحويل JSON: ${e.message}`);
+        }
+    }
+    
+    // دالة لتحويل BigInt إلى String للتأكد من compatibility
+    function normalizeTxForSigning(txObject) {
+        let normalized = {};
+        for (let [key, value] of Object.entries(txObject)) {
+            if (typeof value === 'bigint') {
+                normalized[key] = value.toString();
+            } else {
+                normalized[key] = value;
+            }
+        }
+        return normalized;
+    }
+    
+    // حدث التوقيع
+    document.getElementById('sign-tx-btn').onclick = async () => {
+        // إخفاء أي أخطاء سابقة
+        document.getElementById('error-area').classList.add('hidden');
+        document.getElementById('signed-output-area').classList.add('hidden');
+        
+        let privKey = document.getElementById('signer-private-key').value.trim();
+        let unsignedJson = document.getElementById('unsigned-tx-input').value.trim();
+        
+        // التحقق من المدخلات
+        if (!privKey) {
+            showError('الرجاء إدخال المفتاح الخاص');
+            return;
+        }
+        if (!unsignedJson) {
+            showError('الرجاء لصق المعاملة غير الموقعة');
+            return;
+        }
+        
+        // تنسيق المفتاح الخاص
+        if (!privKey.startsWith('0x')) {
+            privKey = '0x' + privKey;
+        }
+        
+        // التحقق من صحة المفتاح الخاص (64 حرف هيكس بعد 0x)
+        if (privKey.length !== 66 || !/^0x[a-fA-F0-9]{64}$/.test(privKey)) {
+            showError('المفتاح الخاص غير صالح (يجب أن يكون 64 حرف هيكس مع 0x في البداية)');
+            return;
+        }
+        
+        let txObject;
+        try {
+            // تحويل JSON إلى كائن مع معالجة BigInt
+            txObject = parseTransactionJSON(unsignedJson);
+            console.log('تم تحويل المعاملة:', txObject);
+        } catch(e) {
+            showError(e.message);
+            return;
+        }
+        
+        try {
+            // استعادة الحساب من المفتاح الخاص
+            let account;
+            try {
+                account = web3.eth.accounts.privateKeyToAccount(privKey);
+            } catch(e) {
+                showError('المفتاح الخاص غير صالح: ' + e.message);
+                return;
+            }
+            
+            // التحقق من تطابق العنوان (اختياري مع تحذير)
+            if (txObject.from && account.address.toLowerCase() !== txObject.from.toLowerCase()) {
+                const userConfirmed = confirm(
+                    `⚠️ تحذير: عنوان محفظتك (${account.address})\n` +
+                    `لا يطابق عنوان المرسل في المعاملة (${txObject.from})\n\n` +
+                    `هل تريد التوقيع على أي حال؟`
+                );
+                if (!userConfirmed) {
+                    return;
+                }
+            }
+            
+            // تحضير المعاملة للتوقيع (تأكد من أن كل الحقول صحيحة)
+            const txToSign = {
+                from: txObject.from || account.address,
+                to: txObject.to,
+                value: txObject.value ? web3.utils.toHex(txObject.value.toString()) : '0x0',
+                gas: txObject.gas ? web3.utils.toHex(txObject.gas.toString()) : web3.utils.toHex(21000),
+                gasPrice: txObject.gasPrice ? web3.utils.toHex(txObject.gasPrice.toString()) : undefined,
+                nonce: txObject.nonce ? web3.utils.toHex(txObject.nonce.toString()) : undefined,
+                chainId: txObject.chainId || 56
+            };
+            
+            // إضافة data إذا وجدت (لـ USDT والـ smart contracts)
+            if (txObject.data) {
+                txToSign.data = txObject.data;
+            }
+            
+            // إزالة الحقول الغير محددة
+            Object.keys(txToSign).forEach(key => {
+                if (txToSign[key] === undefined || txToSign[key] === null) {
+                    delete txToSign[key];
+                }
+            });
+            
+            console.log('المعاملة للتوقيع:', txToSign);
+            
+            // توقيع المعاملة
+            let signedTx;
+            try {
+                signedTx = await web3.eth.accounts.signTransaction(txToSign, privKey);
+            } catch(e) {
+                showError('فشل في توقيع المعاملة: ' + e.message);
+                return;
+            }
+            
+            if (!signedTx || !signedTx.rawTransaction) {
+                showError('لم يتم إنشاء التوقيع بشكل صحيح');
+                return;
+            }
+            
+            // عرض النتيجة
+            document.getElementById('signed-raw-result').value = signedTx.rawTransaction;
+            document.getElementById('signed-output-area').classList.remove('hidden');
+            
+            // تمرير النتيجة للأسفل
+            document.getElementById('signed-output-area').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+        } catch(e) {
+            console.error('خطأ عام:', e);
+            showError('حدث خطأ غير متوقع: ' + e.message);
         }
     };
-
-    function signTransaction() {
-        const privKey = document.getElementById('priv-key').value.trim();
-        const unsignedData = document.getElementById('unsigned-tx').value.trim();
-
-        if (!privKey || !unsignedData) {
-            return alert("الرجاء إدخال المفتاح الخاص وبيانات المعاملة");
-        }
-
-        try {
-            const wallet = new ethers.Wallet(privKey);
-            const tx = ethers.utils.parseTransaction(unsignedData);
-            
-            const txToSign = {
-                to: tx.to,
-                nonce: tx.nonce,
-                gasLimit: tx.gasLimit,
-                gasPrice: tx.gasPrice,
-                data: tx.data,
-                value: tx.value,
-                chainId: tx.chainId
-            };
-
-            wallet.signTransaction(txToSign).then(signed => {
-                document.getElementById('signed-tx-output').innerText = signed;
-                document.getElementById('result-container').style.display = 'block';
-            }).catch(err => {
-                alert("خطأ أثناء التوقيع: " + err.message);
+    
+    // دالة عرض الأخطاء
+    function showError(message) {
+        const errorDiv = document.getElementById('error-area');
+        const errorMsg = document.getElementById('error-message');
+        errorMsg.innerText = message;
+        errorDiv.classList.remove('hidden');
+        document.getElementById('signed-output-area').classList.add('hidden');
+        
+        // تمرير إلى الخطأ
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        // إخفاء الخطأ بعد 5 ثواني
+        setTimeout(() => {
+            errorDiv.classList.add('hidden');
+        }, 5000);
+    }
+    
+    // نسخ التوقيع
+    document.getElementById('copy-signed-tx').onclick = () => {
+        let rawTx = document.getElementById('signed-raw-result').value;
+        if (rawTx && rawTx.trim() !== '') {
+            navigator.clipboard.writeText(rawTx).then(() => {
+                const btn = document.getElementById('copy-signed-tx');
+                const originalText = btn.innerText;
+                btn.innerText = '✅ تم النسخ!';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                }, 2000);
+            }).catch(() => {
+                alert('فشل النسخ، يمكنك نسخ النص يدوياً');
             });
-
-        } catch (e) {
-            alert("خطأ في البيانات: " + e.message);
+        } else {
+            alert('لا توجد معاملة موقعة للنسخ');
         }
-    }
-
-    function copyResult() {
-        const text = document.getElementById('signed-tx-output').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("تم نسخ المعاملة الموقعة!");
-        });
-    }
+    };
+    
+    // عرض مثال للمعاملة غير الموقعة
+    document.getElementById('example-btn').onclick = () => {
+        const exampleTx = {
+            "from": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
+            "to": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+            "value": "10000000000000000",
+            "gas": "21000",
+            "gasPrice": "5000000000",
+            "nonce": "0",
+            "chainId": 56
+        };
+        
+        document.getElementById('unsigned-tx-input').value = JSON.stringify(exampleTx, null, 2);
+        alert('تم وضع مثال للمعاملة. قم بتغيير العناوين والمبلغ حسب حاجتك!');
+    };
+    
+    // تحسين تجربة المستخدم: تنظيف عند تغيير المدخلات
+    document.getElementById('unsigned-tx-input').addEventListener('focus', () => {
+        document.getElementById('error-area').classList.add('hidden');
+    });
+    
+    document.getElementById('signer-private-key').addEventListener('focus', () => {
+        document.getElementById('error-area').classList.add('hidden');
+    });
+    
+    // دعم لصق المعاملة من الحافظة مباشرة
+    document.getElementById('unsigned-tx-input').addEventListener('paste', function(e) {
+        setTimeout(() => {
+            // يمكن إضافة تحقق سريع هنا إذا أردت
+            console.log('تم لصق معاملة جديدة');
+        }, 100);
+    });
+    
+    // تحذير أمني
+    console.log('BSC Signer جاهز للاستخدام - تأكد من استخدامه في بيئة آمنة');
 </script>
-
 </body>
 </html>
