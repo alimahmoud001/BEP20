@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BSC Signer - Manus</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --primary-color: #F3BA2F;
+            --text-color: #ffffff;
+            --card-bg: #1a1a1a;
+            --input-bg: #262626;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 10px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: white;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--primary-color);
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 1px dashed var(--primary-color);
+        }
+
+        .copy-box {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--primary-color);
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        #load-status {
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>أداة توقيع BSC</h1>
+        <div id="load-status">جاري تحميل المكتبات...</div>
+        
+        <label>المفتاح الخاص (Private Key):</label>
+        <input type="password" id="priv-key" placeholder="أدخل المفتاح الخاص هنا">
+
+        <label>بيانات المعاملة غير الموقعة (Unsigned Tx):</label>
+        <textarea id="unsigned-tx" rows="5" placeholder="الصق البيانات المستخرجة من المحفظة هنا"></textarea>
+
+        <button id="sign-btn" onclick="signTransaction()">تكوين التوقيع</button>
+
+        <div id="result-container" style="display:none;">
+            <div class="result-area">
+                <label>المعاملة الموقعة (Signed Tx):</label>
+                <div id="signed-tx-output" class="copy-box" onclick="copyResult()"></div>
+            </div>
+            <p class="hint">اضغط على الكود أعلاه لنسخه تلقائياً</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = function() {
+        if (typeof ethers === 'undefined') {
+            document.getElementById('load-status').innerText = "خطأ: تعذر تحميل المكتبات.";
+            document.getElementById('load-status').style.color = "red";
+            document.getElementById('sign-btn').disabled = true;
+        } else {
+            document.getElementById('load-status').style.display = 'none';
+        }
+    };
+
+    function signTransaction() {
+        const privKey = document.getElementById('priv-key').value.trim();
+        const unsignedData = document.getElementById('unsigned-tx').value.trim();
+
+        if (!privKey || !unsignedData) {
+            return alert("الرجاء إدخال المفتاح الخاص وبيانات المعاملة");
+        }
+
+        try {
+            const wallet = new ethers.Wallet(privKey);
+            const tx = ethers.utils.parseTransaction(unsignedData);
+            
+            const txToSign = {
+                to: tx.to,
+                nonce: tx.nonce,
+                gasLimit: tx.gasLimit,
+                gasPrice: tx.gasPrice,
+                data: tx.data,
+                value: tx.value,
+                chainId: tx.chainId
+            };
+
+            wallet.signTransaction(txToSign).then(signed => {
+                document.getElementById('signed-tx-output').innerText = signed;
+                document.getElementById('result-container').style.display = 'block';
+            }).catch(err => {
+                alert("خطأ أثناء التوقيع: " + err.message);
+            });
+
+        } catch (e) {
+            alert("خطأ في البيانات: " + e.message);
+        }
+    }
+
+    function copyResult() {
+        const text = document.getElementById('signed-tx-output').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("تم نسخ المعاملة الموقعة!");
+        });
+    }
+</script>
+
+</body>
+</html>
