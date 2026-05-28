@@ -1,505 +1,562 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BSC Wallet - Manus</title>
-    <!-- Stable CDN Links -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>BSC محفظة - عملات ذكية</title>
+    <!-- مكتبات خارجية -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
     <style>
-        :root {
-            --bg-color: #000000;
-            --primary-color: #F3BA2F;
-            --text-color: #ffffff;
-            --card-bg: #1a1a1a;
-            --input-bg: #262626;
-            --border-color: #333333;
-        }
-
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 10px;
+            background-color: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e0e0e0;
+            padding: 0;
+            margin: 0;
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 500px;
+        /* حاوية رئيسية بدون هوامش كبيرة */
+        .app-container {
+            max-width: 100%;
+            padding: 12px 12px 20px 12px;
             margin: 0 auto;
         }
 
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color);
-        }
-
-        h1, h2, h3 {
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--input-bg);
-            color: white;
-            font-size: 14px;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            background-color: var(--primary-color);
-            color: black;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-            transition: opacity 0.2s;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background-color: #333;
-            color: white;
-            margin-top: 10px;
-        }
-
+        /* علامات تبويب */
         .tabs {
             display: flex;
-            margin-bottom: 15px;
-            gap: 5px;
+            gap: 8px;
+            background: #0f0f0f;
+            border-radius: 28px;
+            padding: 6px;
+            margin-bottom: 24px;
+            border: 1px solid #2a2a2a;
         }
-
-        .tab {
+        .tab-btn {
             flex: 1;
-            padding: 10px;
             text-align: center;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            padding: 12px 0;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
+            transition: 0.2s;
+            background: transparent;
+            color: #b0b0b0;
+            border: none;
+        }
+        .tab-btn.active {
+            background: #F5B041;
+            color: #000000;
+            box-shadow: 0 2px 6px rgba(245,176,65,0.3);
         }
 
-        .tab.active {
-            background: var(--primary-color);
-            color: black;
-            border-color: var(--primary-color);
+        /* البطاقات */
+        .card {
+            background: #111111;
+            border-radius: 24px;
+            padding: 18px 16px;
+            margin-bottom: 20px;
+            border: 1px solid #2c2c2c;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .card-title {
+            color: #F5B041;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-right: 3px solid #F5B041;
+            padding-right: 10px;
         }
 
-        .balance-item {
+        .balance-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
+            background: #1a1a1a;
+            padding: 12px 16px;
+            border-radius: 28px;
+            margin-bottom: 12px;
+            font-size: 17px;
+            font-weight: 500;
+        }
+        .balance-label {
+            color: #aaa;
+        }
+        .balance-value {
+            color: #F5B041;
+            font-family: monospace;
+            font-size: 18px;
         }
 
-        #qrcode {
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            margin: 10px 0;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 28px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #F5B041;
+        }
+        button {
+            background-color: #F5B041;
+            color: #000000;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            transition: 0.2s;
+        }
+        button:active {
+            transform: scale(0.97);
+            background-color: #e09d2c;
+        }
+        .qr-box {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
             background: white;
-            padding: 10px;
-            margin: 15px auto;
-            width: fit-content;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 20px;
         }
-
+        .address-text {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 20px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .copy-btn {
+            background: #F5B041;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            width: auto;
+            margin: 0;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .small-icon-btn {
+            background: #2c2c2c;
+            padding: 10px;
+            width: 48px;
+            border-radius: 40px;
+            margin-top: 0;
+            font-size: 20px;
+        }
+        .timer-box {
+            background: #1f1f1f;
+            border-radius: 40px;
+            padding: 10px;
+            text-align: center;
+            margin: 15px 0;
+        }
         .hidden {
             display: none;
         }
-
-        .copy-box {
-            background: var(--input-bg);
-            padding: 10px;
-            border-radius: 8px;
-            word-break: break-all;
+        .warning-note {
+            font-size: 12px;
+            color: #F5B041;
+            margin-top: 10px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            transform: none;
+        }
+        textarea {
             font-family: monospace;
             font-size: 12px;
-            margin: 10px 0;
-            border: 1px dashed var(--primary-color);
-            position: relative;
         }
-
-        .qr-input-container {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .qr-btn {
-            width: 50px;
-            padding: 10px;
-            background: var(--primary-color);
-            color: black;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #reader {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .timer {
-            font-size: 24px;
-            text-align: center;
-            color: var(--primary-color);
-            margin: 20px 0;
-        }
-
-        .success-msg { color: #4CAF50; text-align: center; }
-        .error-msg { color: #f44336; text-align: center; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <!-- Login Screen -->
-    <div id="login-screen" class="card">
-        <h1>محفظة BSC</h1>
-        <p style="text-align: center; margin-bottom: 15px; font-size: 14px;">أدخل المفتاح الخاص أو العنوان العام للبدء</p>
-        <textarea id="login-input" placeholder="أدخل المفتاح الخاص (Private Key) أو العنوان العام (Public Address)" rows="3"></textarea>
-        <button id="login-btn" onclick="login()">دخول</button>
-        <p id="loading-msg" style="text-align: center; margin-top: 10px; color: #888;">جاري تحميل المكتبات...</p>
+<div class="app-container">
+    <!-- أزرار التبويب -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="public-tab">عنوان عام</button>
+        <button class="tab-btn" data-tab="private-tab">مفتاح خاص</button>
     </div>
 
-    <!-- Main Wallet Screen -->
-    <div id="wallet-screen" class="hidden">
-        <div class="tabs">
-            <div class="tab active" onclick="showTab('home')">الرئيسية</div>
-            <div class="tab" onclick="showTab('send')">إرسال</div>
-            <div class="tab" onclick="showTab('receive')">استقبال</div>
+    <!-- تبويب العنوان العام (عرض فقط + استقبال + بناء معاملة غير موقعة) -->
+    <div id="public-tab" class="tab-content">
+        <div class="card">
+            <div class="card-title">🔑 دخول بالعنوان العام</div>
+            <input type="text" id="public-address-input" placeholder="أدخل عنوان BSC العام (0x...)" value="">
+            <button id="load-public-btn">دخول / تحديث</button>
         </div>
 
-        <!-- Home Tab -->
-        <div id="tab-home" class="card">
-            <h3>الأرصدة</h3>
-            <div class="balance-item">
-                <span>BNB</span>
-                <span id="bnb-balance">0.00</span>
+        <div id="public-wallet-info" class="hidden">
+            <div class="card">
+                <div class="card-title">💰 الأرصدة</div>
+                <div class="balance-row"><span class="balance-label">BNB:</span> <span id="pub-bnb-balance" class="balance-value">0</span></div>
+                <div class="balance-row"><span class="balance-label">USDT (BEP20):</span> <span id="pub-usdt-balance" class="balance-value">0</span></div>
             </div>
-            <div class="balance-item">
-                <span>USDT (BEP20)</span>
-                <span id="usdt-balance">0.00</span>
-            </div>
-            <div style="margin-top: 15px; font-size: 12px; color: #888;">
-                العنوان: <span id="display-address" style="color: var(--primary-color);"></span>
-            </div>
-            <button class="btn-secondary" onclick="logout()">خروج</button>
-        </div>
 
-        <!-- Send Tab -->
-        <div id="tab-send" class="card hidden">
-            <h3>إرسال العملات</h3>
-            <select id="send-asset">
-                <option value="BNB">BNB</option>
-                <option value="USDT">USDT (BEP20)</option>
-            </select>
-            <input type="number" id="send-amount" placeholder="الكمية">
-            <div class="qr-input-container">
-                <input type="text" id="send-to" placeholder="عنوان المستقبل">
-                <button class="qr-btn" onclick="startScanner('send-to')">📷</button>
+            <div class="card">
+                <div class="card-title">📥 استقبال</div>
+                <div id="pub-qrcode" class="qr-box"></div>
+                <div class="address-text"><span id="pub-address-display"></span><button class="copy-btn" data-copy="pub-address">نسخ</button></div>
             </div>
-            <div id="reader" class="hidden"></div>
 
-            <!-- Public Key Flow (Offline Signing) -->
-            <div id="public-flow" class="hidden">
-                <button onclick="buildUnsignedTx()">بناء معاملة غير موقعة</button>
-                <div id="unsigned-tx-area" class="hidden">
-                    <p style="font-size: 12px; margin-top: 10px;">انسخ الكود التالي وقم بتوقيعه في أداة التوقيع:</p>
-                    <div class="copy-box" id="unsigned-tx-data" onclick="copyText('unsigned-tx-data')"></div>
-                    <textarea id="signed-tx-input" placeholder="الصق المعاملة الموقعة هنا" rows="3"></textarea>
-                    <button onclick="confirmAndSend(true)">إرسال المعاملة</button>
+            <div class="card">
+                <div class="card-title">📤 إنشاء معاملة (غير موقعة)</div>
+                <select id="pub-tx-type">
+                    <option value="BNB">BNB</option>
+                    <option value="USDT">USDT (BEP20)</option>
+                </select>
+                <input type="number" id="pub-amount" placeholder="المبلغ" step="any">
+                <div class="flex-row">
+                    <input type="text" id="pub-to-address" placeholder="عنوان المستقبل" style="flex:1">
+                    <button id="pub-scan-qr-to" class="small-icon-btn" title="مسح QR للمستقبل">📷</button>
+                </div>
+                <button id="build-unsigned-tx">بناء معاملة غير موقعة</button>
+                <div id="unsigned-area" class="hidden">
+                    <textarea id="unsigned-raw-tx" rows="3" readonly placeholder="المعاملة غير الموقعة"></textarea>
+                    <button class="copy-btn" data-copy="unsigned-raw-tx">📋 نسخ المعاملة</button>
+                </div>
+                <div id="signed-submit-area" class="hidden">
+                    <textarea id="signed-tx-input" rows="2" placeholder="ألصق المعاملة الموقعة من موقع Signer"></textarea>
+                    <button id="send-signed-tx">إرسال المعاملة الموقعة</button>
+                    <div id="send-timer-pub" class="timer-box hidden">⏳ الإرسال بعد: <span id="countdown-pub">0</span> ثانية</div>
                 </div>
             </div>
-
-            <!-- Private Key Flow (Direct) -->
-            <div id="private-flow" class="hidden">
-                <button onclick="confirmAndSend(false)">إرسال</button>
-            </div>
-
-            <!-- Countdown Area -->
-            <div id="countdown-area" class="hidden">
-                <div class="timer" id="timer-display">00</div>
-                <div id="timer-actions">
-                    <button id="confirm-btn" style="margin-bottom: 10px;">تأكيد الإرسال</button>
-                    <button class="btn-secondary" onclick="cancelTransaction()">إلغاء</button>
-                </div>
-            </div>
-
-            <div id="tx-status"></div>
         </div>
+    </div>
 
-        <!-- Receive Tab -->
-        <div id="tab-receive" class="card hidden">
-            <h3>استقبال</h3>
-            <div id="qrcode"></div>
-            <div class="copy-box" id="receive-address" onclick="copyText('receive-address')"></div>
-            <p style="text-align: center; font-size: 12px; color: #888;">اضغط على العنوان لنسخه</p>
+    <!-- تبويب المفتاح الخاص (ارسال مباشر) -->
+    <div id="private-tab" class="tab-content hidden">
+        <div class="card">
+            <div class="card-title">🔐 دخول بالمفتاح الخاص</div>
+            <input type="text" id="private-key-input" placeholder="أدخل المفتاح الخاص (0x... أو بدون 0x)">
+            <button id="load-private-btn">فتح المحفظة</button>
+        </div>
+        <div id="private-wallet-info" class="hidden">
+            <div class="card">
+                <div class="card-title">💰 الأرصدة</div>
+                <div class="balance-row"><span class="balance-label">BNB:</span> <span id="priv-bnb-balance" class="balance-value">0</span></div>
+                <div class="balance-row"><span class="balance-label">USDT (BEP20):</span> <span id="priv-usdt-balance" class="balance-value">0</span></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📥 استقبال (عنواني)</div>
+                <div id="priv-qrcode" class="qr-box"></div>
+                <div class="address-text"><span id="priv-address-display"></span><button class="copy-btn" data-copy="priv-address">نسخ</button></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🚀 إرسال مباشر</div>
+                <select id="priv-tx-type">
+                    <option value="BNB">BNB</option>
+                    <option value="USDT">USDT</option>
+                </select>
+                <input type="number" id="priv-amount" placeholder="المبلغ">
+                <div class="flex-row">
+                    <input type="text" id="priv-to-address" placeholder="عنوان المستلم">
+                    <button id="priv-scan-qr-to" class="small-icon-btn">📷</button>
+                </div>
+                <button id="send-direct-tx">إرسال</button>
+                <div id="direct-timer" class="timer-box hidden">⏳ جاري الإرسال خلال 30 ثانية: <span id="direct-countdown">30</span></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // الكونفج: BSC mainnet
     const BSC_RPC = "https://bsc-dataseed.binance.org/";
-    const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
-    const USDT_ABI = ["function balanceOf(address) view returns (uint256)", "function transfer(address, uint256) returns (bool)", "function decimals() view returns (uint8)"];
-    
-    let provider;
-    let wallet = null;
-    let userAddress = "";
-    let isReadOnly = true;
-    let currentScanner = null;
+    const USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
+    let web3 = new Web3(BSC_RPC);
+    let currentPublicAddress = null;
+    let currentPrivateAccount = null;
+    let lastUnsignedTx = null;
     let countdownInterval = null;
 
-    // Wait for libraries to load
-    window.onload = function() {
-        if (typeof ethers === 'undefined') {
-            document.getElementById('loading-msg').innerText = "خطأ: تعذر تحميل مكتبة ethers. تأكد من اتصالك بالإنترنت.";
-            document.getElementById('loading-msg').style.color = "red";
-            document.getElementById('login-btn').disabled = true;
-        } else {
-            document.getElementById('loading-msg').classList.add('hidden');
-            provider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+    // --- توكن USDT ABI مبسط (balanceOf, transfer, decimals)
+    const usdtAbi = [
+        { "constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+        { "constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},
+        { "constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"}
+    ];
+
+    async function getBalances(address) {
+        if(!address || !web3.utils.isAddress(address)) return {bnb:0, usdt:0};
+        try {
+            let bnbWei = await web3.eth.getBalance(address);
+            let bnb = web3.utils.fromWei(bnbWei, 'ether');
+            let usdtContract = new web3.eth.Contract(usdtAbi, USDT_CONTRACT);
+            let usdtRaw = await usdtContract.methods.balanceOf(address).call();
+            let decimals = await usdtContract.methods.decimals().call();
+            let usdtBalance = usdtRaw / Math.pow(10, decimals);
+            return {bnb: parseFloat(bnb).toFixed(6), usdt: usdtBalance.toFixed(2)};
+        } catch(e){ return {bnb:"0", usdt:"0"}; }
+    }
+
+    function showQr(elementId, address) {
+        document.getElementById(elementId).innerHTML = "";
+        new QRCode(document.getElementById(elementId), { text: address, width: 160, height: 160 });
+    }
+
+    // نسخ
+    document.body.addEventListener('click', (e) => {
+        if(e.target.classList.contains('copy-btn')) {
+            let targetId = e.target.getAttribute('data-copy');
+            let textElem = document.getElementById(targetId);
+            let textToCopy = textElem.value !== undefined ? textElem.value : textElem.innerText;
+            if(textToCopy) {
+                navigator.clipboard.writeText(textToCopy);
+                e.target.innerText = "✅ تم";
+                setTimeout(() => { e.target.innerText = "نسخ"; }, 1500);
+            }
         }
+    });
+
+    // ----- التبويب العام (عرض + معاملة غير موقعة) -----
+    document.getElementById('load-public-btn').onclick = async () => {
+        let addr = document.getElementById('public-address-input').value.trim();
+        if(!web3.utils.isAddress(addr)) { alert("عنوان BSC غير صالح"); return; }
+        currentPublicAddress = addr;
+        let balances = await getBalances(addr);
+        document.getElementById('pub-bnb-balance').innerText = balances.bnb;
+        document.getElementById('pub-usdt-balance').innerText = balances.usdt;
+        document.getElementById('pub-address-display').innerText = addr;
+        showQr("pub-qrcode", addr);
+        document.getElementById('public-wallet-info').classList.remove('hidden');
     };
 
-    async function login() {
-        let input = document.getElementById('login-input').value.trim();
-        if (!input) return alert("الرجاء إدخال مفتاح أو عنوان");
-
+    // بناء معاملة غير موقعة
+    document.getElementById('build-unsigned-tx').onclick = async () => {
+        if(!currentPublicAddress) { alert("أدخل عنوان عام أولاً"); return; }
+        let toAddr = document.getElementById('pub-to-address').value.trim();
+        let amount = parseFloat(document.getElementById('pub-amount').value);
+        let type = document.getElementById('pub-tx-type').value;
+        if(!toAddr || !web3.utils.isAddress(toAddr)) { alert("عنوان المستقبل غير صالح"); return; }
+        if(isNaN(amount) || amount<=0) { alert("أدخل مبلغ صحيح"); return; }
         try {
-            if (ethers.utils.isAddress(input)) {
-                userAddress = input;
-                isReadOnly = true;
-                wallet = null;
-            } else {
-                if (input.length === 64 && !input.startsWith('0x')) {
-                    input = '0x' + input;
-                }
-                wallet = new ethers.Wallet(input, provider);
-                userAddress = wallet.address;
-                isReadOnly = false;
+            let txObj;
+            let nonce = await web3.eth.getTransactionCount(currentPublicAddress);
+            let chainId = 56; // BSC mainnet
+            let gasPrice = await web3.eth.getGasPrice();
+            if(type === "BNB") {
+                txObj = {
+                    from: currentPublicAddress,
+                    to: toAddr,
+                    value: web3.utils.toWei(amount.toString(), 'ether'),
+                    nonce: nonce,
+                    chainId: chainId,
+                    gas: 21000,
+                    gasPrice: gasPrice
+                };
+            } else { // USDT
+                let contract = new web3.eth.Contract(usdtAbi, USDT_CONTRACT);
+                let decimals = await contract.methods.decimals().call();
+                let rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
+                let data = contract.methods.transfer(toAddr, rawAmount).encodeABI();
+                txObj = {
+                    from: currentPublicAddress,
+                    to: USDT_CONTRACT,
+                    value: '0',
+                    nonce: nonce,
+                    chainId: chainId,
+                    gas: 80000,
+                    gasPrice: gasPrice,
+                    data: data
+                };
             }
-
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('wallet-screen').classList.remove('hidden');
-            document.getElementById('display-address').innerText = userAddress;
-            document.getElementById('receive-address').innerText = userAddress;
-            
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), {
-                text: userAddress,
-                width: 200,
-                height: 200
-            });
-
-            if (isReadOnly) {
-                document.getElementById('public-flow').classList.remove('hidden');
-                document.getElementById('private-flow').classList.add('hidden');
-            } else {
-                document.getElementById('public-flow').classList.add('hidden');
-                document.getElementById('private-flow').classList.remove('hidden');
+            // تقدير الغاز لUSDT
+            if(type === "USDT") {
+                let estimated = await web3.eth.estimateGas(txObj).catch(()=>80000);
+                txObj.gas = Math.floor(estimated * 1.1);
             }
+            lastUnsignedTx = txObj;
+            let txSerialized = JSON.stringify(txObj, (key, value) => typeof value === 'bigint' ? value.toString() : value);
+            document.getElementById('unsigned-raw-tx').value = txSerialized;
+            document.getElementById('unsigned-area').classList.remove('hidden');
+            document.getElementById('signed-submit-area').classList.remove('hidden');
+        } catch(e){ alert("فشل بناء المعاملة: "+e.message); }
+    };
 
-            refreshBalances();
-            showTab('home');
-        } catch (e) {
-            alert("خطأ: " + e.message);
-        }
-    }
-
-    async function refreshBalances() {
-        try {
-            const bnbBal = await provider.getBalance(userAddress);
-            document.getElementById('bnb-balance').innerText = ethers.utils.formatEther(bnbBal);
-
-            const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, provider);
-            const usdtBal = await usdtContract.balanceOf(userAddress);
-            document.getElementById('usdt-balance').innerText = ethers.utils.formatUnits(usdtBal, 18);
-        } catch (e) {
-            console.error("Balance fetch error", e);
-        }
-    }
-
-    function showTab(tabName) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
-        
-        document.getElementById('tab-' + tabName).classList.remove('hidden');
-        // Handle tab highlighting manually since event target might not be the tab
-        const tabs = document.querySelectorAll('.tab');
-        if (tabName === 'home') tabs[0].classList.add('active');
-        if (tabName === 'send') tabs[1].classList.add('active');
-        if (tabName === 'receive') tabs[2].classList.add('active');
-        
-        if (tabName === 'home') refreshBalances();
-    }
-
-    function logout() {
-        location.reload();
-    }
-
-    function copyText(id) {
-        const text = document.getElementById(id).innerText || document.getElementById(id).value;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("تم النسخ!");
+    // إرسال المعاملة الموقعة
+    document.getElementById('send-signed-tx').onclick = async () => {
+        let signedRaw = document.getElementById('signed-tx-input').value.trim();
+        if(!signedRaw) { alert("ألصق المعاملة الموقعة"); return; }
+        // بدء العداد
+        startTxTimer("pub", async () => {
+            try {
+                let txHash = await web3.eth.sendSignedTransaction(signedRaw);
+                alert(`✅ تم الإرسال! الهاش: ${txHash.transactionHash}`);
+                // تحديث الرصيد
+                let balances = await getBalances(currentPublicAddress);
+                document.getElementById('pub-bnb-balance').innerText = balances.bnb;
+                document.getElementById('pub-usdt-balance').innerText = balances.usdt;
+            } catch(err) { alert("فشل الإرسال: "+err.message); }
         });
-    }
+    };
 
-    function startScanner(targetId) {
-        const readerDiv = document.getElementById('reader');
-        readerDiv.classList.remove('hidden');
-        
-        currentScanner = new Html5Qrcode("reader");
-        currentScanner.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            (decodedText) => {
-                document.getElementById(targetId).value = decodedText;
-                stopScanner();
-            },
-            (errorMessage) => {}
-        ).catch(err => {
-            alert("تعذر فتح الكاميرا: " + err);
-            readerDiv.classList.add('hidden');
-        });
-    }
-
-    function stopScanner() {
-        if (currentScanner) {
-            currentScanner.stop().then(() => {
-                document.getElementById('reader').classList.add('hidden');
-                currentScanner = null;
-            });
-        }
-    }
-
-    async function buildUnsignedTx() {
-        const asset = document.getElementById('send-asset').value;
-        const amount = document.getElementById('send-amount').value;
-        const to = document.getElementById('send-to').value;
-
-        if (!amount || !to) return alert("أكمل البيانات");
-
+    // ----- تبويب المفتاح الخاص (ارسال مباشر)-----
+    document.getElementById('load-private-btn').onclick = async () => {
+        let privKey = document.getElementById('private-key-input').value.trim();
+        if(!privKey.startsWith('0x')) privKey = '0x'+privKey;
         try {
-            let tx = {
-                to: asset === 'BNB' ? to : USDT_ADDRESS,
-                value: asset === 'BNB' ? ethers.utils.parseEther(amount) : 0,
-                nonce: await provider.getTransactionCount(userAddress),
-                gasLimit: 100000,
-                gasPrice: await provider.getGasPrice(),
-                chainId: 56
-            };
+            let account = web3.eth.accounts.privateKeyToAccount(privKey);
+            currentPrivateAccount = account;
+            let addr = account.address;
+            let balances = await getBalances(addr);
+            document.getElementById('priv-bnb-balance').innerText = balances.bnb;
+            document.getElementById('priv-usdt-balance').innerText = balances.usdt;
+            document.getElementById('priv-address-display').innerText = addr;
+            showQr("priv-qrcode", addr);
+            document.getElementById('private-wallet-info').classList.remove('hidden');
+        } catch(e) { alert("مفتاح خاص غير صالح"); }
+    };
 
-            if (asset === 'USDT') {
-                const iface = new ethers.utils.Interface(USDT_ABI);
-                tx.data = iface.encodeFunctionData("transfer", [to, ethers.utils.parseUnits(amount, 18)]);
-            }
-
-            const unsignedSerialized = ethers.utils.serializeTransaction(tx);
-            document.getElementById('unsigned-tx-data').innerText = unsignedSerialized;
-            document.getElementById('unsigned-tx-area').classList.remove('hidden');
-        } catch (e) {
-            alert("خطأ في بناء المعاملة: " + e.message);
-        }
-    }
-
-    function confirmAndSend(isOffline) {
-        const seconds = isOffline ? 15 : 30;
-        document.getElementById('countdown-area').classList.remove('hidden');
-        document.getElementById('public-flow').classList.add('hidden');
-        document.getElementById('private-flow').classList.add('hidden');
-        
-        let timeLeft = seconds;
-        document.getElementById('timer-display').innerText = timeLeft;
-
-        const confirmBtn = document.getElementById('confirm-btn');
-        confirmBtn.onclick = () => executeSend(isOffline);
-
-        countdownInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer-display').innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(countdownInterval);
-                executeSend(isOffline);
+    // ارسال مباشر مع عداد 30 ثانية
+    let directTimerInterval = null;
+    document.getElementById('send-direct-tx').onclick = async () => {
+        if(!currentPrivateAccount) { alert("أدخل المفتاح الخاص أولاً"); return; }
+        let toAddr = document.getElementById('priv-to-address').value.trim();
+        let amount = parseFloat(document.getElementById('priv-amount').value);
+        let type = document.getElementById('priv-tx-type').value;
+        if(!toAddr || !web3.utils.isAddress(toAddr)) { alert("عنوان المستلم غير صحيح"); return; }
+        if(isNaN(amount) || amount<=0) { alert("مبلغ غير صالح"); return; }
+        // بدء العداد 30 ثانية
+        let countdown = 30;
+        let timerDiv = document.getElementById('direct-timer');
+        let countSpan = document.getElementById('direct-countdown');
+        timerDiv.classList.remove('hidden');
+        if(directTimerInterval) clearInterval(directTimerInterval);
+        directTimerInterval = setInterval(() => {
+            countdown--;
+            countSpan.innerText = countdown;
+            if(countdown <= 0) {
+                clearInterval(directTimerInterval);
+                timerDiv.classList.add('hidden');
+                executeDirectSend(toAddr, amount, type);
             }
         }, 1000);
-    }
+    };
 
-    function cancelTransaction() {
-        clearInterval(countdownInterval);
-        document.getElementById('countdown-area').classList.add('hidden');
-        if (isReadOnly) {
-            document.getElementById('public-flow').classList.remove('hidden');
-        } else {
-            document.getElementById('private-flow').classList.remove('hidden');
-        }
-    }
-
-    async function executeSend(isOffline) {
-        clearInterval(countdownInterval);
-        const statusDiv = document.getElementById('tx-status');
-        statusDiv.innerHTML = "جاري الإرسال...";
-        
+    async function executeDirectSend(toAddr, amount, type) {
         try {
-            let txResponse;
-            if (isOffline) {
-                const signedTx = document.getElementById('signed-tx-input').value.trim();
-                if (!signedTx) throw new Error("لم يتم إدخال المعاملة الموقعة");
-                txResponse = await provider.sendTransaction(signedTx);
+            let txData;
+            let fromAddr = currentPrivateAccount.address;
+            let nonce = await web3.eth.getTransactionCount(fromAddr);
+            let gasPrice = await web3.eth.getGasPrice();
+            if(type === "BNB") {
+                txData = {
+                    from: fromAddr, to: toAddr, value: web3.utils.toWei(amount.toString(), 'ether'),
+                    nonce: nonce, gas: 21000, gasPrice: gasPrice, chainId: 56
+                };
             } else {
-                const asset = document.getElementById('send-asset').value;
-                const amount = document.getElementById('send-amount').value;
-                const to = document.getElementById('send-to').value;
-
-                let tx;
-                if (asset === 'BNB') {
-                    tx = await wallet.sendTransaction({
-                        to: to,
-                        value: ethers.utils.parseEther(amount)
-                    });
-                } else {
-                    const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, wallet);
-                    tx = await usdtContract.transfer(to, ethers.utils.parseUnits(amount, 18));
-                }
-                txResponse = tx;
+                let contract = new web3.eth.Contract(usdtAbi, USDT_CONTRACT);
+                let decimals = await contract.methods.decimals().call();
+                let rawAmount = BigInt(Math.floor(amount * Math.pow(10, decimals)));
+                let data = contract.methods.transfer(toAddr, rawAmount).encodeABI();
+                txData = {
+                    from: fromAddr, to: USDT_CONTRACT, value: '0', data: data,
+                    nonce: nonce, gas: 80000, gasPrice: gasPrice, chainId: 56
+                };
+                let estimated = await web3.eth.estimateGas(txData).catch(()=>80000);
+                txData.gas = Math.floor(estimated * 1.1);
             }
-
-            statusDiv.innerHTML = `<p class="success-msg">تمت المعاملة بنجاح!</p>
-                                   <p style="font-size:10px; word-break:break-all;">Hash: ${txResponse.hash}</p>`;
-            
-            setTimeout(() => {
-                document.getElementById('countdown-area').classList.add('hidden');
-                showTab('home');
-            }, 3000);
-
-        } catch (e) {
-            statusDiv.innerHTML = `<p class="error-msg">خطأ: ${e.message}</p>`;
-            setTimeout(() => cancelTransaction(), 3000);
-        }
+            let signed = await web3.eth.accounts.signTransaction(txData, currentPrivateAccount.privateKey);
+            let receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+            alert(`تمت المعاملة بنجاح! \nTX: ${receipt.transactionHash}`);
+            // تحديث الرصيد
+            let balances = await getBalances(fromAddr);
+            document.getElementById('priv-bnb-balance').innerText = balances.bnb;
+            document.getElementById('priv-usdt-balance').innerText = balances.usdt;
+        } catch(e) { alert("فشل الإرسال: "+e.message); }
     }
+
+    // دالة مؤقت 15 ثانية للمعاملة الموقعة
+    function startTxTimer(type, callback) {
+        let timerDiv = document.getElementById(`send-timer-${type}`);
+        let countSpan = document.getElementById(`countdown-${type}`);
+        let count = 15;
+        timerDiv.classList.remove('hidden');
+        if(countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
+            count--;
+            countSpan.innerText = count;
+            if(count <= 0) {
+                clearInterval(countdownInterval);
+                timerDiv.classList.add('hidden');
+                callback();
+            }
+        }, 1000);
+        // إلغاء العملية إذا نقر المستخدم؟ يمكن إضافة زر إلغاء سريع
+        // أضافة زر إلغاء: سنقوم بإضافة زر إلغاء ديناميكي
+        let cancelBtn = document.createElement('button');
+        cancelBtn.innerText = "إلغاء العملية";
+        cancelBtn.style.backgroundColor = "#444";
+        cancelBtn.onclick = () => {
+            clearInterval(countdownInterval);
+            timerDiv.classList.add('hidden');
+            cancelBtn.remove();
+            alert("تم إلغاء الإرسال");
+        };
+        timerDiv.appendChild(cancelBtn);
+        setTimeout(() => { if(cancelBtn.parentNode) cancelBtn.remove(); }, 16000);
+    }
+
+    // --- مسح QR للمستقبل (للتسجيل في الحقل)---
+    async function scanQRForInput(inputElementId) {
+        try {
+            const codeReader = new ZXing.BrowserQRCodeReader();
+            const videoInputDevices = await ZXing.BrowserQRCodeReader.listVideoInputDevices();
+            if (!videoInputDevices.length) { alert("لا توجد كاميرا"); return; }
+            const selectedDeviceId = videoInputDevices[0].deviceId;
+            const result = await codeReader.decodeFromInputVideoDevice(selectedDeviceId, undefined);
+            if(result.text) {
+                document.getElementById(inputElementId).value = result.text;
+                codeReader.reset();
+                alert("تم تعيين العنوان من QR");
+            }
+        } catch(e) { alert("فشل المسح: "+e); }
+    }
+
+    document.getElementById('pub-scan-qr-to').onclick = () => scanQRForInput('pub-to-address');
+    document.getElementById('priv-scan-qr-to').onclick = () => scanQRForInput('priv-to-address');
+
+    // التبويب
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            let tabId = btn.getAttribute('data-tab');
+            document.getElementById('public-tab').classList.add('hidden');
+            document.getElementById('private-tab').classList.add('hidden');
+            document.getElementById(tabId).classList.remove('hidden');
+        };
+    });
+    // استدعاء أولي
+    if(window.ethereum) alert("هذه محفظة يدوية لا تتصل بـ MetaMask، استخدم المفتاح أو العنوان العام");
 </script>
 </body>
 </html>
