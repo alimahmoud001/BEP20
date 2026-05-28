@@ -256,23 +256,7 @@
             alert('لا توجد معاملة موقعة للنسخ');
         }
     };
-    
-    // عرض مثال للمعاملة غير الموقعة
-    document.getElementById('example-btn').onclick = () => {
-        const exampleTx = {
-            "from": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-            "to": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-            "value": "10000000000000000",
-            "gas": "21000",
-            "gasPrice": "5000000000",
-            "nonce": "0",
-            "chainId": 56
-        };
         
-        document.getElementById('unsigned-tx-input').value = JSON.stringify(exampleTx, null, 2);
-        alert('تم وضع مثال للمعاملة. قم بتغيير العناوين والمبلغ حسب حاجتك!');
-    };
-    
     // تحسين تجربة المستخدم: تنظيف عند تغيير المدخلات
     document.getElementById('unsigned-tx-input').addEventListener('focus', () => {
         document.getElementById('error-area').classList.add('hidden');
